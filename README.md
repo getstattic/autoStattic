@@ -22,7 +22,7 @@ The `wpImport.py` script is a utility for migrating content from a WordPress sit
   - `pyyaml`
   - `tqdm`
 
-These are already in the requirements.txt file you installed from the README.md file. If you are running this script separately in a different location, you can install the necessary dependencies with:
+These are already in the requirements.txt file you installed from the Stattic [README.md](https://github.com/getstattic/stattic/main/README.md) file. If you are running this script separately in a different location, you can install the necessary dependencies with:
 
 ```
 install requests html2text pyyaml tqdm
