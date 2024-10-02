@@ -1,4 +1,4 @@
-# autoStattic - import your WordPress site
+# autoStattic - import content from your WordPress site
 
 The `autoStattic.py` script is a utility for migrating content from a WordPress site to a static site generator by fetching data via the WordPress REST API and converting it to Markdown format. The script downloads posts, pages, categories, tags, authors, and custom taxonomies and saves them in a structured Markdown format, along with YAML frontmatter metadata.
 
