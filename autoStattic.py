@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 import yaml
 import argparse
@@ -18,6 +19,8 @@ html_converter = html2text.HTML2Text()
 html_converter.ignore_images = False  # Allow image links
 html_converter.ignore_links = False   # Allow hyperlinks
 html_converter.body_width = 0         # Preserve line breaks in Markdown
+html_converter.single_line_break = True  # Handle single line breaks better
+html_converter.protect_links = True   # Prevent links from being modified
 
 def fetch_wordpress_data(domain_url, endpoint, per_page=100):
     """Fetch paginated data from the WordPress REST API."""
@@ -63,24 +66,36 @@ def map_term_ids_to_names(ids, terms):
 
 def save_as_markdown(file_path, frontmatter, content):
     """Save data as a Markdown file with YAML frontmatter."""
-    # Ensure title is a string, not a dictionary
-    if 'title' in frontmatter and isinstance(frontmatter['title'], dict):
-        frontmatter['title'] = frontmatter['title'].get('rendered', 'Untitled')
+    # Ensure title is properly extracted and sanitized
+    title = frontmatter.get('title', 'Untitled')
+    if isinstance(title, dict):
+        title = title.get('rendered', 'Untitled')
+    frontmatter['title'] = title
 
-    with open(file_path, "w") as f:
+    # Save frontmatter and content as a valid Markdown file
+    with open(file_path, "w", encoding="utf-8") as f:
         f.write("---\n")
-        yaml.dump(frontmatter, f, allow_unicode=True, sort_keys=False)  # Ensure the order remains
-        f.write("---\n")
+        yaml.dump(frontmatter, f, allow_unicode=True, sort_keys=False)
+        f.write("---\n\n")
         f.write(content)
+
+def process_media_links(content, media_base_url):
+    """Replace external media links with local versions."""
+    content = re.sub(r'!\[(.*?)\]\((https://example.com/wp-content/uploads/(.*?)\))', r'!\[\1\](\3)', content)
+    return content
 
 def convert_post_to_md(post, authors, categories, tags, custom_taxonomies, post_type="post"):
     """Convert WordPress post or page to Markdown."""
-    slug = post.get('slug', 'untitled')
+    slug = post.get('slug', f'{post_type}-{post.get("id")}')  # Use slug or fallback to id
+    slug = slug.replace('/', '-')  # Ensure no slashes in filenames
     
     # Convert HTML content and excerpt to Markdown
     html_content = post.get('content', {}).get('rendered', '')
-    content = html_converter.handle(html_content)  # Convert to Markdown
-    
+    content = html_converter.handle(html_content).strip()
+
+    # Replace media URLs
+    content = process_media_links(content, domain_url)
+
     # Get author name using author ID
     author_id = post.get('author', 0)
     author_name = authors.get(author_id, "Unknown")
@@ -90,7 +105,7 @@ def convert_post_to_md(post, authors, categories, tags, custom_taxonomies, post_
 
     # Define the most important frontmatter elements first
     frontmatter = {
-        'title': title,  # Correct title extraction
+        'title': title,
         'date': post.get('date', ''),
         'author': author_name,
         'excerpt': html_converter.handle(post.get('excerpt', {}).get('rendered', '')).strip(),
