@@ -5,7 +5,7 @@ import yaml
 import argparse
 import html2text
 from datetime import datetime
-from tqdm import tqdm  # For progress bar
+from tqdm import tqdm
 
 # Output directory for Markdown files
 CONTENT_DIR = "content"
@@ -21,6 +21,9 @@ html_converter.ignore_links = False   # Allow hyperlinks
 html_converter.body_width = 0         # Preserve line breaks in Markdown
 html_converter.single_line_break = True  # Handle single line breaks better
 html_converter.protect_links = True   # Prevent links from being modified
+html_converter.ignore_emphasis = False  # Keep bold/italic
+html_converter.ignore_tables = False  # Allow table HTML
+html_converter.bypass_tables = False  # Keep tables as HTML
 
 def fetch_wordpress_data(domain_url, endpoint, per_page=100):
     """Fetch paginated data from the WordPress REST API."""
@@ -84,17 +87,33 @@ def process_media_links(content, media_base_url):
     content = re.sub(r'!\[(.*?)\]\((https://example.com/wp-content/uploads/(.*?)\))', r'!\[\1\](\3)', content)
     return content
 
-def convert_post_to_md(post, authors, categories, tags, custom_taxonomies, post_type="post"):
-    """Convert WordPress post or page to Markdown."""
+def convert_post_to_md(post, authors, categories, tags, custom_taxonomies, post_type="post", use_markdown=True):
+    """Convert WordPress post or page to Markdown with HTML preservation for complex blocks."""
     slug = post.get('slug', f'{post_type}-{post.get("id")}')  # Use slug or fallback to id
     slug = slug.replace('/', '-')  # Ensure no slashes in filenames
     
-    # Convert HTML content and excerpt to Markdown
+    # Get the raw HTML content
     html_content = post.get('content', {}).get('rendered', '')
-    content = html_converter.handle(html_content).strip()
 
-    # Replace media URLs
-    content = process_media_links(content, domain_url)
+    # Split content by Gutenberg blocks or custom elements
+    # Detect Gutenberg blocks (div.wp-block-* or any element containing class="wp-block-*")
+    blocks = re.split(r'(<div[^>]*wp-block[^>]*>.*?</div>)', html_content, flags=re.DOTALL)
+
+    # Process each block, converting simple elements to Markdown and leaving complex HTML intact
+    converted_content = ""
+    for block in blocks:
+        # If the block is a Gutenberg block or custom HTML, keep it as raw HTML
+        if re.search(r'wp-block', block):
+            converted_content += block.strip() + "\n\n"  # Add raw HTML block
+        else:
+            # Convert simple HTML to Markdown using html2text for non-Gutenberg content
+            if use_markdown:
+                converted_content += html_converter.handle(block).strip() + "\n\n"
+            else:
+                converted_content += block.strip() + "\n\n"
+
+    # Replace media URLs in the Markdown content
+    content = process_media_links(converted_content, domain_url)
 
     # Get author name using author ID
     author_id = post.get('author', 0)
@@ -180,7 +199,7 @@ def fetch_custom_taxonomies(domain_url):
 
     return {}
 
-def save_posts_and_pages(domain_url, authors, categories, tags, custom_taxonomies):
+def save_posts_and_pages(domain_url, authors, categories, tags, custom_taxonomies, use_markdown):
     """Fetch and save all posts and pages as markdown files."""
     print("Fetching all posts...")
     posts = fetch_wordpress_data(domain_url, "posts")
@@ -192,15 +211,15 @@ def save_posts_and_pages(domain_url, authors, categories, tags, custom_taxonomie
 
     print(f"Total pages fetched: {len(pages)}")
 
-    # Use a progress bar to track the conversion process for posts
-    print("Saving posts...")
-    for post in tqdm(posts, desc="Converting posts to Markdown", leave=True):
-        convert_post_to_md(post, authors, categories, tags, custom_taxonomies, post_type="post")
-
-    # Use a progress bar to track the conversion process for pages
-    print("Saving pages...")
-    for page in tqdm(pages, desc="Converting pages to Markdown", leave=True):
-        convert_post_to_md(page, authors, categories, tags, custom_taxonomies, post_type="page")
+    # Start the progress bar for both posts and pages
+    total_items = len(posts) + len(pages)
+    with tqdm(total=total_items, desc="Converting to Markdown", unit="item") as pbar:
+        for post in posts:
+            convert_post_to_md(post, authors, categories, tags, custom_taxonomies, post_type="post", use_markdown=use_markdown)
+            pbar.update(1)
+        for page in pages:
+            convert_post_to_md(page, authors, categories, tags, custom_taxonomies, post_type="page", use_markdown=use_markdown)
+            pbar.update(1)
 
 def save_authors(domain_url):
     """Fetch and save all authors as markdown metadata."""
@@ -248,15 +267,24 @@ def save_categories_and_tags(domain_url):
     return categories, tags
 
 if __name__ == "__main__":
+    # Track start time
+    start_time = datetime.now()
+
     # Use argparse to require domain URL as input
     parser = argparse.ArgumentParser(description="Fetch WordPress data and convert to Markdown")
-    parser.add_argument('domain', type=str, help="The WordPress site URL (e.g., https://your-site.com)")
+    parser.add_argument('domain', type=str, help="Your WordPress site URL (e.g., https://your-site.com)")
+    parser.add_argument('--markdown', action='store_true', help="Convert HTML content to Markdown")
 
     args = parser.parse_args()
     domain_url = args.domain.rstrip("/")  # Ensure no trailing slash
+    use_markdown = args.markdown  # Check if markdown flag is set
 
     # Fetch and save authors, custom taxonomies, posts, pages, categories, and tags
     authors = save_authors(domain_url)
     categories, tags = save_categories_and_tags(domain_url)
     custom_taxonomies = fetch_custom_taxonomies(domain_url)
-    save_posts_and_pages(domain_url, authors, categories, tags, custom_taxonomies)
+    save_posts_and_pages(domain_url, authors, categories, tags, custom_taxonomies, use_markdown=use_markdown)
+
+    # Calculate and display total time taken
+    total_time = datetime.now() - start_time
+    print(f"Total time taken: {total_time.total_seconds()} seconds")
