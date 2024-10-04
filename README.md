@@ -1,96 +1,111 @@
 # autoStattic - import content from your WordPress site
 
-The `autoStattic.py` script is a utility for migrating content from a WordPress site to the Stattic site generator by fetching data via the WordPress REST API and converting it to Markdown format. 
-
-The script downloads posts, pages, categories, tags, authors, and custom taxonomies and saves them in a structured Markdown format, along with YAML frontmatter metadata.
+A Python script to fetch WordPress posts, pages, authors, categories, tags, and custom taxonomies via the WordPress REST API and convert them into Markdown files with YAML front matter. Ideal for migrating content to static site generators or other Markdown-based workflows.
 
 ## Features
 
-- **Fetch WordPress content**: Retrieve posts, pages, categories, tags, and custom taxonomies.
-- **HTML to Markdown conversion**: Converts WordPress HTML content into Markdown.
-- **YAML frontmatter**: Automatically adds metadata such as title, author, date, categories, and tags.
-- **Support for custom taxonomies**: Fetches and integrates custom taxonomies defined in WordPress.
-- **Progress bars**: Displays progress using `tqdm` for long-running operations.
-- **Error handling**: Gracefully handles HTTP, JSON, and other errors during content retrieval.
+- **Content Fetching**: Retrieves posts, pages, authors, categories, tags, and custom taxonomies from a WordPress site.
+- **Markdown Conversion**: Converts WordPress content to Markdown, preserving metadata through YAML front matter.
+- **HTML Handling**: Options to convert HTML content to Markdown or preserve complex HTML blocks (like Gutenberg blocks).
+- **Media Link Processing**: Adjusts media links to point to local versions.
+- **Custom Taxonomies**: Automatically detects and processes custom taxonomies.
+- **Command-Line Interface**: Flexible options provided via command-line arguments.
 
----
-
-## Prerequisites
+## Requirements
 
 - Python 3.x
-- Required Python libraries:
-  - `requests`
-  - `html2text`
-  - `pyyaml`
-  - `tqdm`
+- Packages:
+    - `requests`
+    - `PyYAML`
+    - `html2text`
+    - `tqdm`
 
-These are already in the `requirements.txt` file you installed from the Stattic [README.md](https://github.com/getstattic/stattic/main/README.md) file. If you are running this script separately in a different location, you can install the necessary dependencies with:
+Install the required packages using:
+    
+    pip install -r requirements.txt
+    
 
-```
-install requests html2text pyyaml tqdm
-```
+## Installation
 
----
+1. **Clone the Repository**
+    
+    git clone https://github.com/yourusername/your-repository.git
+    cd your-repository
+    
+
+2. **Install Dependencies**
+    
+    pip install -r requirements.txt
+    
 
 ## Usage
+    
+    python wordpress_to_markdown.py [options] <WordPress_Site_URL>
+    
 
-### 1. Fetch and Convert WordPress Data
+### Positional Arguments
 
-To run the script, you need to provide the base URL of your WordPress site (make sure the WordPress REST API is enabled). The script will automatically download and convert posts, pages, categories, tags, and authors into Markdown.
+- `<WordPress_Site_URL>`: The base URL of your WordPress site (e.g., `https://your-site.com`).
 
-```
-python3 autoStattic.py https://your-wordpress-site.com
-```
+### Optional Arguments
 
-This command will:
+- `--markdown`: Convert HTML content to Markdown using `html2text`. Without this flag, the script preserves complex HTML blocks.
 
-* Fetch and save authors in a YAML file.
-* Fetch and convert posts and pages into Markdown files with YAML frontmatter.
-* Fetch categories and tags, saving them in separate YAML files.
-* Download custom taxonomies if any are available and integrate them into the Markdown content.
+### Examples
 
-### 2. Files Generated
+- **Preserve HTML Blocks**
+    
+    python wordpress_to_markdown.py https://your-site.com
+    
+- **Convert HTML to Markdown**
+    
+    python wordpress_to_markdown.py https://your-site.com --markdown
 
-The script saves the downloaded content in a directory called `content/`:
+## Output
 
-**Markdown files:**
+The script generates a `content` directory with the following structure:
 
-* Posts are saved in `content/posts/`
-* Pages are saved in `content/pages/`
+- `content/posts/`: Markdown files for each post.
+- `content/pages/`: Markdown files for each page.
+- `content/authors.yml`: YAML file mapping author IDs to names.
+- `content/categories.yml`: YAML file containing category data.
+- `content/tags.yml`: YAML file containing tag data.
 
-**Metadata:**
+Each Markdown file includes YAML front matter with metadata:
 
-`content/authors.yml`: Contains author information.
-`content/categories.yml`: Contains category data.
-`content/tags.yml`: Contains tag data.
+- `title`
+- `date`
+- `author`
+- `excerpt`
+- `custom_url`
+- `type` (post or page)
+- `categories`
+- `tags`
+- Custom taxonomies (if any)
+- Advanced Custom Fields (ACF) data (if available)
 
-### Example YAML Frontmatter in Markdown
+## Configuration
 
-Each post or page is saved as a Markdown file with the following YAML frontmatter:
+- **Content Directory**: Modify the `CONTENT_DIR` variable in the script to change the output directory.
+- **HTML to Markdown Conversion Settings**: Adjust the `html_converter` settings to fine-tune Markdown conversion.
+- **API Pagination**: Change the `per_page` parameter in `fetch_wordpress_data()` to adjust items fetched per API call.
 
-```
----
-title: "Sample Blog Post"
-date: 2024-09-25
-author: "John Doe"
-categories:
-  - "Python"
-tags:
-  - "Migration"
-excerpt: "This is a sample blog post."
-custom_url: "sample-blog-post"
-order: 4
----
-```
+## Handling Custom Taxonomies
 
-The body of the content is in Markdown format.
+The script automatically detects custom taxonomies and processes them accordingly. Custom taxonomy terms are included in the YAML front matter of each Markdown file.
 
----
+## Limitations
 
-## Error Handling
+- **Authentication**: The script does not support authenticated endpoints. It works with publicly accessible WordPress REST APIs.
+- **Media Files**: While media links are processed, actual media files (images, attachments) are not downloaded.
+- **Error Handling**: The script includes basic error handling, but unexpected API responses may cause issues.
 
-The script handles common errors that may occur during the WordPress data retrieval process:
+## Troubleshooting
 
-* **HTTP Errors**: If the REST API endpoint is unreachable or returns an invalid status, the error is logged and the script continues.
-* **JSON Decoding Errors**: If the response is not valid JSON, the script will log the error and proceed with the next item.
-* **Progress Bars**: For large datasets, progress bars will indicate the status of the data fetching and conversion.
+- **HTTP Errors**: Ensure the WordPress REST API is accessible at `https://your-site.com/wp-json/wp/v2/`.
+- **Empty Responses**: Check if the site has content and that the correct endpoints are being accessed.
+- **Invalid JSON Responses**: Verify that the API responses are valid JSON. Issues may arise due to plugins or themes interfering with API output.
+
+## Contributing
+
+Contributions are welcome! Feel free to open issues or submit pull requests for improvements or bug fixes.
