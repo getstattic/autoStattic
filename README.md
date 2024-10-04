@@ -1,6 +1,6 @@
 # autoStattic - import content from your WordPress site
 
-A Python script to fetch WordPress posts, pages, authors, categories, tags, and custom taxonomies via the WordPress REST API and convert them into Markdown files with YAML front matter. Ideal for migrating content to static site generators or other Markdown-based workflows.
+A Python script to fetch WordPress posts, pages, authors, categories, tags, and custom taxonomies via the WordPress REST API and convert them into Markdown files with YAML front matter. 
 
 ## Features
 
@@ -96,9 +96,9 @@ The script automatically detects custom taxonomies and processes them accordingl
 
 ## Limitations
 
-- **Authentication**: The script does not support authenticated endpoints. It works with publicly accessible WordPress REST APIs.
-- **Media Files**: While media links are processed, actual media files (images, attachments) are not downloaded.
-- **Error Handling**: The script includes basic error handling, but unexpected API responses may cause issues.
+- **Authentication**: The script does not (yet) support authenticated endpoints. It works with publicly accessible WordPress REST APIs.
+- **Media Files**: While media links are processed, actual media files (images, attachments) are not downloaded. That is done in the main [stattic](https://github.com/getstattic/stattic) script.
+- **Error Handling**: The script includes basic error handling, but unexpected API responses may cause issues. If this happens, please open an issue so it can be fixed :)
 
 ## Troubleshooting
 
