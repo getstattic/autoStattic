@@ -29,8 +29,8 @@ Install the required packages using:
 
 1. **Clone the Repository**
     
-    git clone https://github.com/yourusername/your-repository.git
-    cd your-repository
+    git clone https://github.com/getstattic/autoStattic.git
+    cd autoStattic
     
 
 2. **Install Dependencies**
