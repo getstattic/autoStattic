@@ -1,0 +1,4 @@
+requests
+PyYAML
+tqdm
+html2text
