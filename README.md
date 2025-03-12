@@ -55,11 +55,11 @@ Install the required packages using:
 
 - **Preserve HTML Blocks**
     
-    python wordpress_to_markdown.py https://your-site.com
+    python autoStattic.py https://your-site.com
     
 - **Convert HTML to Markdown**
     
-    python wordpress_to_markdown.py https://your-site.com --markdown
+    python autoStattic.py https://your-site.com --markdown
 
 ## Output
 
