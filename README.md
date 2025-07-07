@@ -21,27 +21,29 @@ A Python script to fetch WordPress posts, pages, authors, categories, tags, and 
     - `tqdm`
 
 Install the required packages using:
-    
-    pip install -r requirements.txt
-    
+
+```bash
+pip install -r requirements.txt
+```
 
 ## Installation
 
 1. **Clone the Repository**
-    
-    git clone https://github.com/getstattic/autoStattic.git
-    cd autoStattic
-    
+```bash
+git clone https://github.com/getstattic/autoStattic.git
+cd autoStattic
+```
 
 2. **Install Dependencies**
-    
-    pip install -r requirements.txt
-    
+```bash
+pip install -r requirements.txt
+```
 
 ## Usage
-    
-    python wordpress_to_markdown.py [options] <WordPress_Site_URL>
-    
+
+```bash
+python3 autoStattic.py [options] <WordPress_Site_URL>
+```
 
 ### Positional Arguments
 
@@ -55,11 +57,11 @@ Install the required packages using:
 
 - **Preserve HTML Blocks**
     
-    python wordpress_to_markdown.py https://your-site.com
+    python3 autoStattic.py https://your-site.com
     
 - **Convert HTML to Markdown**
     
-    python wordpress_to_markdown.py https://your-site.com --markdown
+    python3 autoStattic.py https://your-site.com --markdown
 
 ## Output
 
